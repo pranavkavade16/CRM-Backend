@@ -128,7 +128,7 @@ app.get("/leads", async (req, res) => {
             filters.tags = {$in: tags.split(',')}
         }
 
-        const leads = await Lead.find(filters).populate(salesAgent);
+        const leads = await Lead.find(filters).populate("salesAgent");
         
         if (leads.length != 0) {
             res.status(200).json({
