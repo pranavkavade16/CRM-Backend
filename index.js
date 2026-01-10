@@ -147,15 +147,22 @@ app.get("/leads", async (req, res) => {
 app.patch("/leads/:leadId", async(req, res) => {
     try {
         const {leadId} = req.params;
-        const {tags, ...updatedData} = req.body;
+        const {tags, ...otherFields} = req.body;
 
-         if (tags && tags.length > 0) {
-      updateQuery.$addToSet = {
-        tags: { $each: tags }
-      };
-    }
+          const updateQuery = {};
+        
+        if (Object.keys(otherFields).length > 0) {
+            updateQuery.$set = otherFields;
+            }
+
+
+        if (Array.isArray(tags) && tags.length > 0) {
+            updateQuery.$addToSet = {
+                tags: { $each: tags }
+            };
+            }
     
-        const updatedLead = await Lead.findByIdAndUpdate(leadId, updatedData, {new: true});
+        const updatedLead = await Lead.findByIdAndUpdate(leadId, updateQuery, {new: true});
 
             if (!updatedLead) {
       return res.status(404).json({
