@@ -260,6 +260,52 @@ app.get('/agents', async (req, res) => {
         res.status(500).json({message: "Failed to fetch the agents data.", error: error.message})    }
 })
 
+// API to add a comment 
+app.post("/leads/:leadId/comments", async (req, res) => {
+    try {
+        const {leadId} = req.params;
+
+        const {author, commentText} = req.body;
+
+        if (!author || !commentText) {
+            return res.status(400).json({error: "Invalid comment"})
+        }
+
+        const savedComment = await Comment.create({
+            lead: leadId,
+            author,
+            commentText,
+        })
+
+        await savedComment.populate("lead").populate("author")
+
+        if (savedComment) {
+            res.status(200).json(savedComment)
+        } else {
+            res.status(404).json({error: "Failed to add the comment."})
+        }
+    } catch (error) {
+        res.status(500).json({message: "Failed to add the comment", error: error.message})
+    }
+})
+
+// API to read all the comments
+app.get("/leads/:leadId/comments", async (req, res) => {
+    try {
+        const {leadId} = req.params
+
+        const leadComments = await Comment.findOne({lead: leadId})
+
+        if (leadComments.length > 0) {
+            res.send(leadComments)
+        } else {
+            res.status(404).json({error: "Failed to find the comment"})
+        }
+    } catch(error) {
+        res.status(500).json({message: "Failed to fetch the data.", error: error.message})
+    }
+})
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log('Server is running on the PORT:', PORT);
