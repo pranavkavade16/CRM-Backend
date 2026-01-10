@@ -144,6 +144,31 @@ app.get("/leads", async (req, res) => {
     }
 })
 
+app.post("/leads/:leadId", async(req, res) => {
+    try {
+        const {leadId} = req.params;
+        const updatedData = req.body;
+
+        const updatedLead = await Lead.findByIdAndUpdate(leadId, updatedData, {new: true});
+
+            if (!updatedLead) {
+      return res.status(404).json({
+        success: false,
+        message: `${leadId} not found`
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Lead updated successfully",
+      data: updatedLead
+    });
+
+    } catch(error) {
+        res.status(500).json({message: "Failed to update the data.", error: error.message})
+    }
+})
+
 // API to add anew sales agent
 app.post('/agents', async (req, res) => {
     try {
