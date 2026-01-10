@@ -184,7 +184,7 @@ app.patch("/leads/:leadId", async(req, res) => {
 })
 
 // API to delete a lead
-app.delete("/leads", async(req, res) => {
+app.delete("/leads/:leadId", async(req, res) => {
     try {
         const {leadId} = req.params;
 
