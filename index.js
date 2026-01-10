@@ -149,7 +149,7 @@ app.patch("/leads/:leadId", async(req, res) => {
         const {leadId} = req.params;
         const updatedData = req.body;
 
-        const updatedLead = await Lead.findByIdAndUpdate(leadId, updatedData, {new: true, runValidators: true});
+        const updatedLead = await Lead.findByIdAndUpdate(leadId, {$set: updatedData}, {new: true, runValidators: true});
 
             if (!updatedLead) {
       return res.status(404).json({
