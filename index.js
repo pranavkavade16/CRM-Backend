@@ -144,6 +144,7 @@ app.get("/leads", async (req, res) => {
     }
 })
 
+// API to update the lead
 app.patch("/leads/:leadId", async(req, res) => {
     try {
         const {leadId} = req.params;
@@ -179,6 +180,23 @@ app.patch("/leads/:leadId", async(req, res) => {
 
     } catch(error) {
         res.status(500).json({message: "Failed to update the data.", error: error.message})
+    }
+})
+
+// API to delete a lead
+app.delete("/leads", async(req, res) => {
+    try {
+        const {leadId} = req.params;
+
+        const deletedLead = await Lead.findByIdAndDelete(leadId);
+
+        if (deletedLead) {
+            res.status(200).json({message: "Lead deleted successfully."})
+        } else {
+            res.status(404).json({error: `Lead with ID ${leadId} not found.`})
+        }
+    } catch(error) {
+            res.status(500).json({message: "Failed to delete the lead.", error: error.message})
     }
 })
 
