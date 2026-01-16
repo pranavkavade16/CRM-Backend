@@ -127,9 +127,11 @@ app.post('/leads', async (req, res) => {
 // API to filter and read the leads
 app.get('/leads', async (req, res) => {
   try {
-    const { source, salesAgent, status, tags } = req.query;
+    const { source, salesAgent, status, tags, sort } = req.query;
 
     const filters = {};
+
+    const sortObj = {};
 
     const allowedSource = [
       'Website',
@@ -147,6 +149,8 @@ app.get('/leads', async (req, res) => {
       'Proposal Sent',
       'Closed',
     ];
+
+    const allowedSort = ["priority", "timeToClose"]
 
     if (source) {
       if (!allowedSource.includes(source)) {
@@ -172,7 +176,14 @@ app.get('/leads', async (req, res) => {
       filters.tags = { $in: tags.split(',') };
     }
 
-    const leads = await Lead.find(filters).populate('salesAgent');
+    if (sort) {
+      if (!allowedSort.includes(sort)) {
+        return res.status(400).json({error: "Invalid sort type."})
+      }
+      sortObj[sort] = order === "desc" ? -1 : 1;
+    }
+
+    const leads = await Lead.find(filters).sort(sortObj).populate('salesAgent');
 
     if (leads.length != 0) {
       res.status(200).json({
