@@ -127,7 +127,7 @@ app.post('/leads', async (req, res) => {
 // API to filter and read the leads
 app.get('/leads', async (req, res) => {
   try {
-    const { source, salesAgent, status, tags, sort } = req.query;
+    const { source, salesAgent, status, tags, sort, order } = req.query;
 
     const filters = {};
 
