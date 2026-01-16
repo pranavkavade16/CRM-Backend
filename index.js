@@ -133,6 +133,12 @@ app.get('/leads', async (req, res) => {
 
     const sortObj = {};
 
+    const priorityOrder = {
+      high: 3,
+      medium: 2,
+      low: 1,
+    }
+
     const allowedSource = [
       'Website',
       'Referral',
@@ -379,6 +385,35 @@ app.get('/leads/:leadId/comments', async (req, res) => {
       .json({ message: 'Failed to fetch the data.', error: error.message });
   }
 });
+
+// API to read the lead which is closed in last 7 days
+app.get("/report/last-week", async (req, res) => {
+  try {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    const closedLastWeek = await Lead.find({
+      status: "Closed",
+      closedAt: { $gte: sevenDaysAgo },
+    }).populate("salesAgent");
+
+    if (closedLastWeek.length === 0) {
+      return res.status(404).json({ error: "No leads closed last week" });
+    }
+
+    res.status(200).json({
+      total: closedLastWeek.length,
+      data: closedLastWeek,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch the data",
+      error: error.message,
+    });
+  }
+});
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
