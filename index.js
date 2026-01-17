@@ -127,7 +127,7 @@ app.post('/leads', async (req, res) => {
 // API to filter and read the leads
 app.get('/leads', async (req, res) => {
   try {
-    const { source, salesAgent, status, tags, sort, order } = req.query;
+    const { source, salesAgent, status, tags, sort, order, priority } = req.query;
 
     const filters = {};
 
@@ -154,6 +154,8 @@ app.get('/leads', async (req, res) => {
       'Closed',
     ];
 
+    const allowedPriority = ["High", "Medium", "Low"]
+
     const allowedSort = ["priority", "timeToClose"]
 
     if (source) {
@@ -174,6 +176,13 @@ app.get('/leads', async (req, res) => {
         return res.status(400).json({ error: 'Invalid status.' });
       }
       filters.status = status;
+    }
+
+    if (priority) {
+      if(!allowedPriority.includes(priority)) {
+        return res.status(400).json({error: "Invalid priority"})
+      }
+      filters.priority = priority;
     }
 
     if (tags) {
@@ -204,7 +213,7 @@ app.get('/leads', async (req, res) => {
         return order === 'desc' ? -diff : diff;
       });
     }
-    
+
     if (leads.length != 0) {
       res.status(200).json({
         success: true,
