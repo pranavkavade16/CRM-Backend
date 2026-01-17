@@ -131,8 +131,6 @@ app.get('/leads', async (req, res) => {
 
     const filters = {};
 
-    const sortObj = {};
-
     const priorityOrder = {
       high: 3,
       medium: 2,
@@ -186,16 +184,32 @@ app.get('/leads', async (req, res) => {
       if (!allowedSort.includes(sort)) {
         return res.status(400).json({error: "Invalid sort type."})
       }
-      sortObj[sort] = order === "desc" ? -1 : 1;
     }
 
-    const leads = await Lead.find(filters).sort(sortObj).populate('salesAgent');
+    const leads = await Lead.find(filters).populate('salesAgent');
 
+    let sortedData = leads;
+
+    if (sort === 'priority') {
+      sortedData = leads.sort((a, b) => {
+        const diff =
+          priorityOrder[a.priority] - priorityOrder[b.priority];
+        return order === 'desc' ? -diff : diff;
+      });
+    }
+
+    if (sort === 'timeToClose') {
+      sortedData = leads.sort((a, b) => {
+        const diff = a.timeToClose - b.timeToClose;
+        return order === 'desc' ? -diff : diff;
+      });
+    }
+    
     if (leads.length != 0) {
       res.status(200).json({
         success: true,
         count: leads.length,
-        data: leads,
+        data: sortedData,
       });
     } else {
       res.status(404).json({ error: 'Leads not found.' });
