@@ -132,9 +132,9 @@ app.get('/leads', async (req, res) => {
     const filters = {};
 
     const priorityOrder = {
-      high: 3,
-      medium: 2,
-      low: 1,
+      High: 3,
+      Medium: 2,
+      Low: 1,
     }
 
     const allowedSource = [
