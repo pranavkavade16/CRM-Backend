@@ -397,11 +397,7 @@ app.get('/leads/:leadId/comments', async (req, res) => {
       .populate('author')
       .sort({ createdAt: -1 });    
 
-    if (leadComments.length > 0) {
-      res.send(leadComments);
-    } else {
-      res.status(404).json({ error: 'Failed to find the comment' });
-    }
+      return res.status(200).json(leadComments);
   } catch (error) {
     res
       .status(500)
