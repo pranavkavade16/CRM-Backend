@@ -358,6 +358,23 @@ app.get('/agents', async (req, res) => {
   }
 });
 
+// API to delete a sales agent
+app.delete("/salesAgent/delete/:agentId", async(req, res) => {
+  try {
+    const {agentId} = req.params;
+
+    const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
+
+    if (deletedAgent) {
+      res.status(200).json({message: "Sales agent deleted successfully."})
+    } else {
+      res.status(404).json({error: "Sales agent not found." })
+    }
+  }catch(error){
+    res.status(500).json({message: "Failed to delete the agent.", error: error.message})
+  }
+})
+
 // API to add a comment
 app.post('/leads/:leadId/comments', async (req, res) => {
   try {
