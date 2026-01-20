@@ -365,6 +365,11 @@ app.delete("/salesAgent/delete/:agentId", async(req, res) => {
 
     const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
 
+        await Lead.updateMany(
+      { salesAgent: agentId },
+      { $set: { salesAgent: null } }
+    );
+
     if (deletedAgent) {
       res.status(200).json({message: "Sales agent deleted successfully."})
     } else {
