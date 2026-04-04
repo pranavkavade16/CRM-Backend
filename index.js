@@ -1,19 +1,19 @@
-const express = require('express');
+const express = require("express");
 const app = express();
 
-const { initializeDatabase } = require('./db/db.connect');
-const Lead = require('./models/lead.model');
-const SalesAgent = require('./models/salesAgent.model');
-const Comment = require('./models/comment.model');
-const Tag = require('./models/tag.model');
+const { initializeDatabase } = require("./db/db.connect");
+const Lead = require("./models/lead.model");
+const SalesAgent = require("./models/salesAgent.model");
+const Comment = require("./models/comment.model");
+const Tag = require("./models/tag.model");
 
-const validator = require('validator');
+const validator = require("validator");
 
-const cors = require('cors');
-const { default: mongoose } = require('mongoose');
+const cors = require("cors");
+const { default: mongoose } = require("mongoose");
 
 const corsOptions = {
-  origin: '*',
+  origin: "*",
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -22,14 +22,20 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
-initializeDatabase();
+const PORT = 3000;
 
-app.get('/', (req, res) => {
-  res.send('CRM Application');
+initializeDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log("🚀 Server is running on PORT:", PORT);
+  });
+});
+
+app.get("/", (req, res) => {
+  res.send("CRM Application");
 });
 
 // API to add a new lead
-app.post('/leads', async (req, res) => {
+app.post("/leads", async (req, res) => {
   try {
     const { name, source, salesAgent, status, tags, timeToClose, priority } =
       req.body;
@@ -37,42 +43,42 @@ app.post('/leads', async (req, res) => {
     if (!name) {
       return res
         .status(400)
-        .json({ error: 'Invalid input: Please add a valid name.' });
+        .json({ error: "Invalid input: Please add a valid name." });
     }
 
     if (!source) {
       return res
         .status(400)
-        .json({ error: 'Invalid input: Please add a valid source' });
+        .json({ error: "Invalid input: Please add a valid source" });
     }
 
     const allowedStatus = [
-      'New',
-      'Contacted',
-      'Qualified',
-      'Proposal Sent',
-      'Closed',
+      "New",
+      "Contacted",
+      "Qualified",
+      "Proposal Sent",
+      "Closed",
     ];
 
     if (status && !allowedStatus.includes(status)) {
       return res.status(400).json({
         error:
-          'Invalid status input: Allowed values are: New, Contacted, Qualified, Proposal Sent, Closed.',
+          "Invalid status input: Allowed values are: New, Contacted, Qualified, Proposal Sent, Closed.",
       });
     }
 
     if (timeToClose && timeToClose <= 0) {
       return res.status(400).json({
         error:
-          'Invalid input: Please add a positive value for time to close input.',
+          "Invalid input: Please add a positive value for time to close input.",
       });
     }
 
-    const allowedPriority = ['High', 'Medium', 'Low'];
+    const allowedPriority = ["High", "Medium", "Low"];
 
     if (priority && !allowedPriority.includes(priority)) {
       return res.status(400).json({
-        error: 'Invalid input: Allowed values are: High, Medium and Low.',
+        error: "Invalid input: Allowed values are: High, Medium and Low.",
       });
     }
 
@@ -96,11 +102,11 @@ app.post('/leads', async (req, res) => {
       priority,
     });
 
-    await lead.populate('salesAgent');
+    await lead.populate("salesAgent");
 
     res.status(201).json({
       success: true,
-      message: 'Lead created successfully',
+      message: "Lead created successfully",
       data: {
         id: lead._id,
         name: lead.name,
@@ -118,16 +124,17 @@ app.post('/leads', async (req, res) => {
     console.error(error.stack);
     res.status(500).json({
       success: false,
-      message: 'Failed to add the lead.',
+      message: "Failed to add the lead.",
       error: error.message,
     });
   }
 });
 
 // API to filter and read the leads
-app.get('/leads', async (req, res) => {
+app.get("/leads", async (req, res) => {
   try {
-    const { source, salesAgent, status, tags, sort, order, priority } = req.query;
+    const { source, salesAgent, status, tags, sort, order, priority } =
+      req.query;
 
     const filters = {};
 
@@ -135,82 +142,81 @@ app.get('/leads', async (req, res) => {
       High: 3,
       Medium: 2,
       Low: 1,
-    }
+    };
 
     const allowedSource = [
-      'Website',
-      'Referral',
-      'Cold Call',
-      'Advertisement',
-      'Email',
-      'Other',
+      "Website",
+      "Referral",
+      "Cold Call",
+      "Advertisement",
+      "Email",
+      "Other",
     ];
 
     const allowedStatus = [
-      'New',
-      'Contacted',
-      'Qualified',
-      'Proposal Sent',
-      'Closed',
+      "New",
+      "Contacted",
+      "Qualified",
+      "Proposal Sent",
+      "Closed",
     ];
 
-    const allowedPriority = ["High", "Medium", "Low"]
+    const allowedPriority = ["High", "Medium", "Low"];
 
-    const allowedSort = ["priority", "timeToClose"]
+    const allowedSort = ["priority", "timeToClose"];
 
     if (source) {
       if (!allowedSource.includes(source)) {
-        return res.status(400).json({ error: 'Invalid source' });
+        return res.status(400).json({ error: "Invalid source" });
       }
       filters.source = source;
     }
     if (salesAgent) {
       if (!mongoose.Types.ObjectId(salesAgent)) {
-        return res.status(400).json({ error: 'Invalid sales agent id' });
+        return res.status(400).json({ error: "Invalid sales agent id" });
       }
       filters.salesAgent = salesAgent;
     }
 
     if (status) {
       if (!allowedStatus.includes(status)) {
-        return res.status(400).json({ error: 'Invalid status.' });
+        return res.status(400).json({ error: "Invalid status." });
       }
       filters.status = status;
     }
 
     if (priority) {
-      if(!allowedPriority.includes(priority)) {
-        return res.status(400).json({error: "Invalid priority"})
+      if (!allowedPriority.includes(priority)) {
+        return res.status(400).json({ error: "Invalid priority" });
       }
       filters.priority = priority;
     }
 
     if (tags) {
-      filters.tags = { $in: tags.split(',') };
+      filters.tags = { $in: tags.split(",") };
     }
 
     if (sort) {
       if (!allowedSort.includes(sort)) {
-        return res.status(400).json({error: "Invalid sort type."})
+        return res.status(400).json({ error: "Invalid sort type." });
       }
     }
 
-    const leads = await Lead.find(filters).populate('salesAgent');
+    const leads = await Lead.find(filters).populate("salesAgent");
 
     let sortedData = leads;
 
-    if (sort === 'priority') {
+    if (sort === "priority") {
       sortedData = leads.sort((a, b) => {
-        const diff =
-          priorityOrder[a.priority] - priorityOrder[b.priority];
-        return order === 'desc' ? -diff : diff;
+        const diff = priorityOrder[a.priority] - priorityOrder[b.priority];
+        return order === "desc" ? -diff : diff;
       });
     }
 
-    if (sort === 'timeToClose') {
+    if (sort === "timeToClose") {
       sortedData = leads.sort((a, b) => {
         const diff = a.timeToClose - b.timeToClose;
-        return order === 'desc' ? -diff : diff;
+        return order === "desc" ? -diff : diff;
       });
     }
 
@@ -221,17 +227,17 @@ app.get('/leads', async (req, res) => {
         data: sortedData,
       });
     } else {
-      res.status(404).json({ error: 'Leads not found.' });
+      res.status(404).json({ error: "Leads not found." });
     }
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Failed to fetch the leads', error: error.message });
+      .json({ message: "Failed to fetch the leads", error: error.message });
   }
 });
 
 // API to update the lead
-app.patch('/leads/:leadId', async (req, res) => {
+app.patch("/leads/:leadId", async (req, res) => {
   try {
     const { leadId } = req.params;
     const { tags, ...otherFields } = req.body;
@@ -261,61 +267,61 @@ app.patch('/leads/:leadId', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Lead updated successfully',
+      message: "Lead updated successfully",
       data: updatedLead,
     });
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Failed to update the data.', error: error.message });
+      .json({ message: "Failed to update the data.", error: error.message });
   }
 });
 
 // API to delete a lead
-app.delete('/leads/:leadId', async (req, res) => {
+app.delete("/leads/:leadId", async (req, res) => {
   try {
     const { leadId } = req.params;
 
     const deletedLead = await Lead.findByIdAndDelete(leadId);
 
     if (deletedLead) {
-      res.status(200).json({ message: 'Lead deleted successfully.' });
+      res.status(200).json({ message: "Lead deleted successfully." });
     } else {
       res.status(404).json({ error: `Lead with ID ${leadId} not found.` });
     }
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Failed to delete the lead.', error: error.message });
+      .json({ message: "Failed to delete the lead.", error: error.message });
   }
 });
 
 // API to add anew sales agent
-app.post('/agents', async (req, res) => {
+app.post("/agents", async (req, res) => {
   try {
     const { name, email } = req.body;
 
-    if (!name || typeof name !== 'string') {
+    if (!name || typeof name !== "string") {
       return res.status(400).json({
-        error: 'Name must be a valid string',
+        error: "Name must be a valid string",
       });
     }
 
     if (!email || !validator.isEmail(email)) {
       return res
         .status(400)
-        .json({ error: 'Invalid email: Please enter a valid email address.' });
+        .json({ error: "Invalid email: Please enter a valid email address." });
     }
 
     const agent = new SalesAgent(req.body);
     const salesAgent = await agent.save();
 
     if (!salesAgent) {
-      return res.status(400).json({ error: 'Failed to add the sales agent.' });
+      return res.status(400).json({ error: "Failed to add the sales agent." });
     } else {
       res.status(200).json({
         success: true,
-        message: 'Agent added successfully',
+        message: "Agent added successfully",
         data: {
           id: salesAgent._id,
           name: salesAgent.name,
@@ -328,67 +334,69 @@ app.post('/agents', async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Failed to add the agent', error: error.message });
+      .json({ message: "Failed to add the agent", error: error.message });
   }
 });
 
 // API to read all the sales agents
-app.get('/agents', async (req, res) => {
+app.get("/agents", async (req, res) => {
   try {
     const allAgents = await SalesAgent.find();
 
     if (allAgents.length != 0) {
       res.status(200).json({
         success: true,
-        message: 'Sales Agents fetched successfully',
+        message: "Sales Agents fetched successfully",
         data: allAgents,
       });
     } else {
       res.status(404).json({
         success: false,
-        message: 'Failed to fetch sales agents',
+        message: "Failed to fetch sales agents",
         error: error.message,
       });
     }
   } catch (error) {
     res.status(500).json({
-      message: 'Failed to fetch the agents data.',
+      message: "Failed to fetch the agents data.",
       error: error.message,
     });
   }
 });
 
 // API to delete a sales agent
-app.delete("/salesAgent/delete/:agentId", async(req, res) => {
+app.delete("/salesAgent/delete/:agentId", async (req, res) => {
   try {
-    const {agentId} = req.params;
+    const { agentId } = req.params;
 
     const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
 
-        await Lead.updateMany(
+    await Lead.updateMany(
       { salesAgent: agentId },
-      { $set: { salesAgent: null } }
+      { $set: { salesAgent: null } },
     );
 
     if (deletedAgent) {
-      res.status(200).json({message: "Sales agent deleted successfully."})
+      res.status(200).json({ message: "Sales agent deleted successfully." });
     } else {
-      res.status(404).json({error: "Sales agent not found." })
+      res.status(404).json({ error: "Sales agent not found." });
     }
-  }catch(error){
-    res.status(500).json({message: "Failed to delete the agent.", error: error.message})
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to delete the agent.", error: error.message });
   }
-})
+});
 
 // API to add a comment
-app.post('/leads/:leadId/comments', async (req, res) => {
+app.post("/leads/:leadId/comments", async (req, res) => {
   try {
     const { leadId } = req.params;
 
     const { author, commentText } = req.body;
 
     if (!author || !commentText) {
-      return res.status(400).json({ error: 'Invalid comment' });
+      return res.status(400).json({ error: "Invalid comment" });
     }
 
     const savedComment = await Comment.create({
@@ -400,30 +408,30 @@ app.post('/leads/:leadId/comments', async (req, res) => {
     if (savedComment) {
       res.status(200).json(savedComment);
     } else {
-      res.status(404).json({ error: 'Failed to add the comment.' });
+      res.status(404).json({ error: "Failed to add the comment." });
     }
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Failed to add the comment', error: error.message });
+      .json({ message: "Failed to add the comment", error: error.message });
   }
 });
 
 // API to read all the comments
-app.get('/leads/:leadId/comments', async (req, res) => {
+app.get("/leads/:leadId/comments", async (req, res) => {
   try {
     const { leadId } = req.params;
 
     const leadComments = await Comment.find({ lead: leadId })
-      .populate('lead')
-      .populate('author')
-      .sort({ createdAt: -1 });    
+      .populate("lead")
+      .populate("author")
+      .sort({ createdAt: -1 });
 
-      return res.status(200).json(leadComments);
+    return res.status(200).json(leadComments);
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Failed to fetch the data.', error: error.message });
+      .json({ message: "Failed to fetch the data.", error: error.message });
   }
 });
 
@@ -455,8 +463,6 @@ app.get("/report/last-week", async (req, res) => {
   }
 });
 
-
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log('Server is running on the PORT:', PORT);
-});
+// app.listen(PORT, () => {
+//   console.log('Server is running on the PORT:', PORT);
+// });
