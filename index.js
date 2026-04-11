@@ -9,6 +9,7 @@ const Tag = require("./models/tag.model");
 
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const generateToken = require("./utils/generateToken");
 
 const cors = require("cors");
 const { default: mongoose } = require("mongoose");
@@ -53,7 +54,7 @@ app.post("/auth/signup", async (req, res) => {
     }
 
     // Duplicate email check
-    const existing = await User.findOne({ email });
+    const existing = await SalesAgent.findOne({ email });
     if (existing) {
       return res
         .status(409)
@@ -62,7 +63,7 @@ app.post("/auth/signup", async (req, res) => {
 
     // Hash + persist
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await SalesAgent.create({
+    const salesAgent = await SalesAgent.create({
       name,
       email,
       password: hashedPassword,
@@ -71,13 +72,46 @@ app.post("/auth/signup", async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      userId: user._id,
+      agentId: salesAgent._id,
     });
   } catch (err) {
     console.error("Signup error:", err);
     return res
       .status(500)
       .json({ success: false, error: "Internal server error" });
+  }
+});
+
+// API to login into the web app
+app.post("/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await SalesAgent.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+    const token = generateToken({
+      id: user._id,
+      email: user.email,
+    });
+
+    res.status(200).json({ token, user });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
   }
 });
 
